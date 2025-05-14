@@ -1,0 +1,86 @@
+Password Reset
+Problem: "I can’t log in to my account."
+Solution:
+- Navigate to [Company]’s login page.
+- Click on the Forgot Password link, typically located beneath the login fields.
+- Enter the registered email address associated with your account.
+- Check your email inbox (and spam/junk folder, if necessary) for a password reset link.
+- Click the link, and follow the on-screen instructions to set a new password.- Ensure your new password is strong, comprising at least 12+ characters, mixing uppercase/lowercase letters, numbers, and symbols (e.g., !, #, $).
+- Avoid using commonly guessed passwords, such as "123456" or "password123."
+
+- Try logging in again with the updated password.
+- If issues persist, contact your company’s IT support team for assistance.
+
+
+Software Installation Errors
+Problem: "Installation fails with error code 0x80070002."
+Solution:
+- Verify that your system meets the minimum requirements for the software (e.g., operating system version, RAM, storage, etc.).- Example: Windows 10 or newer with at least 4GB RAM and 10GB free space.
+
+- Temporarily disable antivirus and firewall programs during the installation process to prevent interference.- Remember to re-enable them afterward.
+
+- Run the installer as Administrator:- Right-click the installer file and select "Run as Administrator."
+
+- If the issue persists, follow these steps:- Download the latest version of the software installer from the official website or provided link.
+- Ensure you uninstall any partially installed files before attempting reinstallation.
+
+- For advanced troubleshooting:- Check the system log for details about the error (Start > Event Viewer > Windows Logs > Application).
+- Provide the error log to the IT team, if required.
+
+
+
+Network Connectivity Issues
+Problem: "Cannot connect to the VPN."
+Solution:
+- Confirm that your device is connected to the internet (e.g., via Wi-Fi or Ethernet).
+- Restart your modem and/or router:- Turn off your modem/router for 30 seconds, then turn it back on.
+
+- Ensure that your VPN client software is updated to the latest version:- Check for updates directly within the VPN software or download them from the provider’s website.
+
+- Double-check the VPN configuration:- Verify your login credentials (username and password).
+- Confirm that the server address (e.g., vpn.company.com) is correctly entered.
+
+- If the issue continues, note down any error codes displayed and contact IT support, providing the following information:- Screenshot of the error message.
+- Steps already attempted.
+
+
+
+Email Configuration
+Problem: "Outlook won’t sync with company email."
+Solution:
+- Open Outlook and navigate to:- File > Account Settings > Account Settings.
+
+- Select your email account and click Change Settings.
+- Re-enter the following IMAP/POP3 settings:- Incoming mail server (IMAP): imap.company.com- Port: 993
+- Encryption: SSL/TLS
+
+- Outgoing mail server (SMTP): smtp.company.com- Port: 587
+- Encryption: SSL/TLS
+
+
+- Confirm that your username (email address) and password are correct.
+- Test the configuration by clicking Test Account Settings.- Resolve any flagged issues based on the results.
+
+- If syncing still fails:- Clear the Outlook cache: File > Options > Advanced > Outlook Data File Settings.
+- Restart Outlook and try again.
+
+
+
+Software Crashes
+Problem: "App crashes on launch."
+Solution:
+- Update the software:- Visit the application’s official website or in-app update feature to ensure you’re running the latest version.
+
+- Reinstall Microsoft Visual C++ Redistributable:- Go to Control Panel > Programs and Features.
+- Locate Microsoft Visual C++ Redistributable versions and uninstall them.
+- Download and install the latest versions (both x64 and x86) from the Microsoft website.
+
+- Check for conflicting programs:- Disable or uninstall any antivirus programs that might interfere with the app.
+- Close unnecessary background processes using Task Manager (Ctrl + Shift + Esc).
+
+- Access the crash log:- Navigate to C:/Users/[Your Name]/AppData/Logs.
+- Locate the crash log and include it in a support ticket to your IT team.
+
+- As a final step, consider running a System File Check (SFC):- Open Command Prompt as Administrator.
+- Run the command: sfc /scannow to repair potential system file issues.
+
