@@ -1,0 +1,45 @@
+# FastAPI and server dependencies
+fastapi>=0.95.0
+uvicorn>=0.22.0
+pydantic>=2.0.0
+pydantic-settings>=2.0.0
+python-dotenv>=1.0.0
+python-multipart>=0.0.6
+email-validator>=2.0.0
+
+# Firebase dependencies
+firebase-admin>=6.1.0
+pyrebase4>=4.6.0
+
+# Zilliz Cloud / PyMilvus dependencies
+pymilvus>=2.2.8
+
+# LlamaIndex dependencies
+llama-index>=0.8.0
+llama-index-embeddings-huggingface>=0.1.0
+llama-index-vector-stores-milvus>=0.1.0
+llama-index-llms-groq>=0.1.0
+
+# Qdrant integration for LlamaIndex
+llama-index-vector-stores-qdrant>=0.1.0
+
+# Document processing dependencies
+PyPDF2>=3.0.0
+pdfminer.six>=20221105
+
+# Task queue dependencies
+
+# Utility dependencies
+pytz>=2023.3
+numpy>=1.24.0
+loguru>=0.7.0
+accelerate
+
+# Slack integration dependency
+aiohttp>=3.9.0
+
+# DNS verification dependency
+dnspython>=2.4.0
+
+# Qdrant client for vector DB, pin to a version with multi-vector support
+qdrant-client>=1.5.0

@@ -1,0 +1,218 @@
+# Backend API Endpoints
+
+This document lists the API endpoints available in the ChatSphere backend.
+
+## Authentication (`/api/auth`)
+
+- **POST** `/register`
+  - **Description:** Register a new user.
+  - **Request Body:** `UserCreate` (email, password, display_name)
+  - **Response:** `UserResponse` (uid, email, displayName, token)
+- **POST** `/login`
+  - **Description:** Login a user.
+  - **Request Body:** `UserLogin` (email, password)
+  - **Response:** `UserResponse` (uid, email, displayName, token)
+- **POST** `/logout`
+  - **Description:** Logout a user (revokes token).
+  - **Requires Auth:** Yes (OAuth2 Bearer Token)
+  - **Response:** `{ "message": "Logout successful" }`
+- **POST** `/reset-password`
+  - **Description:** Send a password reset email.
+  - **Request Body:** `PasswordReset` (email)
+  - **Response:** `{ "message": "Password reset email sent" }`
+- **GET** `/me`
+  - **Description:** Get current user data.
+  - **Requires Auth:** Yes (OAuth2 Bearer Token)
+  - **Response:** `UserResponse` (uid, email, displayName, token)
+
+## Documents (`/api/documents`)
+
+- **POST** `/upload`
+  - **Description:** Upload a new document (PDF, TXT, DOCX). Triggers synchronous processing.
+  - **Requires Auth:** Yes (User ID from token)
+  - **Request Body:** `FormData` (file: UploadFile, name: str, description: Optional[str])
+  - **Response:** `{ "documentId": str, "status": "pending", "message": str, "name": str, "id": str }`
+- **GET** `/`
+  - **Description:** List all documents for the current user.
+  - **Requires Auth:** Yes (User ID from token)
+  - **Response:** `List[DocumentResponse]`
+- **GET** `/{document_id}`
+  - **Description:** Get details for a specific document.
+  - **Requires Auth:** Yes (User ID from token, checks ownership)
+  - **Response:** `DocumentResponse`
+- **DELETE** `/{document_id}`
+  - **Description:** Delete a document, its storage file, and vector embeddings. Removes it from associated chatbots.
+  - **Requires Auth:** Yes (User ID from token, checks ownership)
+  - **Response:** `204 No Content`
+- **POST** `/{document_id}/reindex`
+  - **Description:** Reindex a document (re-process and update embeddings).
+  - **Requires Auth:** Yes (User ID from token, checks ownership)
+  - **Response:** `DocumentResponse` (updated document)
+- **POST** `/url`
+  - **Description:** Create a new document by scraping a website URL.
+  - **Requires Auth:** Yes (User object from token)
+  - **Request Body:** `{ "url": str, "name": Optional[str], "description": Optional[str] }`
+  - **Response:** `{ "id": str, "name": str, "description": str, "status": "ready", "metadata": dict }`
+
+## Chatbots (`/api/chatbots`)
+
+- **POST** `/preview`
+  - **Description:** Preview a chatbot's response without saving the interaction.
+  - **Requires Auth:** Optional (User ID from token)
+  - **Request Body:** `PreviewRequest` (settings: ChatbotSettings, message: str, documents: List[str], chatHistory: List[ChatMessage])
+  - **Response:** `PreviewResponse` (response: str, sources: List[dict])
+- **POST** `/`
+  - **Description:** Create a new chatbot.
+  - **Requires Auth:** Yes (User ID from token)
+  - **Request Body:** `ChatbotCreate` (name: str, description: Optional[str], settings: ChatbotSettings, documents: List[str])
+  - **Response:** `ChatbotResponse`
+- **GET** `/`
+  - **Description:** List all chatbots for the current user.
+  - **Requires Auth:** Yes (User ID from token)
+  - **Response:** `List[ChatbotResponse]`
+- **GET** `/{chatbot_id}`
+  - **Description:** Get details for a specific chatbot.
+  - **Requires Auth:** Yes (User ID from token, checks ownership)
+  - **Response:** `ChatbotResponse`
+- **PUT** `/{chatbot_id}`
+  - **Description:** Update an existing chatbot.
+  - **Requires Auth:** Yes (User ID from token, checks ownership)
+  - **Request Body:** `ChatbotUpdate` (name: Optional[str], description: Optional[str], settings: Optional[ChatbotSettings], documents: Optional[List[str]])
+  - **Response:** `ChatbotResponse`
+- **DELETE** `/{chatbot_id}`
+  - **Description:** Delete a chatbot.
+  - **Requires Auth:** Yes (User ID from token, checks ownership)
+  - **Response:** `204 No Content`
+- **POST** `/{chatbot_id}/documents`
+  - **Description:** Assign documents to a chatbot.
+  - **Requires Auth:** Yes (User ID from token, checks ownership)
+  - **Request Body:** `ChatbotDocumentAssign` (documentIds: List[str])
+  - **Response:** `ChatbotResponse`
+- **DELETE** `/{chatbot_id}/documents/{document_id}`
+  - **Description:** Remove a document from a chatbot.
+  - **Requires Auth:** Yes (User ID from token, checks ownership)
+  - **Response:** `ChatbotResponse`
+- **GET** `/widget-config/{chatbot_id}`
+  - **Description:** Get the configuration needed for the embeddable chat widget.
+  - **Requires Auth:** No (Public endpoint)
+  - **Response:** `dict` (containing chatbot settings relevant for the widget)
+
+## Chat Sessions (`/api/chat`)
+
+- **POST** `/sessions`
+  - **Description:** Create a new chat session associated with a chatbot.
+  - **Requires Auth:** Yes (User ID from token)
+  - **Request Body:** `ChatSessionCreate` (chatbotId: str)
+  - **Response:** `ChatSessionResponse`
+- **GET** `/sessions`
+  - **Description:** List all chat sessions for the current user.
+  - **Requires Auth:** Yes (User ID from token)
+  - **Response:** `List[ChatSessionResponse]`
+- **GET** `/sessions/{session_id}`
+  - **Description:** Get details and messages for a specific chat session.
+  - **Requires Auth:** Yes (User ID from token, checks ownership)
+  - **Response:** `ChatSessionResponse`
+- **POST** `/sessions/{session_id}/messages`
+  - **Description:** Send a message from the authenticated user in a chat session. Gets response from the chatbot.
+  - **Requires Auth:** Yes (User ID from token, checks ownership)
+  - **Request Body:** `MessageCreate` (content: str)
+  - **Response:** `MessageResponse` (assistant's response message)
+- **GET** `/sessions/{session_id}/messages`
+  - **Description:** Get the chat history (list of messages) for a session.
+  - **Requires Auth:** Yes (User ID from token, checks ownership)
+  - **Response:** `List[MessageResponse]`
+- **DELETE** `/sessions/{session_id}`
+  - **Description:** Delete a chat session.
+  - **Requires Auth:** Yes (User ID from token, checks ownership)
+  - **Response:** `204 No Content`
+- **POST** `/widget/{chatbot_id}/session`
+  - **Description:** Create a new chat session specifically for the embeddable widget.
+  - **Requires Auth:** No (Public endpoint)
+  - **Request Body:** `WidgetSessionRequest` (chatbotId: Optional[str])
+  - **Response:** `SessionResponse` (sessionId: str, welcomeMessage: Optional[str])
+- **POST** `/widget/{chatbot_id}/message`
+  - **Description:** Send a message within a widget chat session.
+  - **Requires Auth:** No (Public endpoint)
+  - **Request Body:** `WidgetMessageRequest` (sessionId: str, message: str)
+  - **Response:** `ChatResponse` (response: str, sources: List[dict])
+
+## Integrations (`/api/integrations`)
+
+- **GET** `/`
+  - **Description:** List all integrations for the current user.
+  - **Requires Auth:** Yes (User object)
+  - **Response:** `List[Integration]`
+  - **Backend Implementation:** Seems correct in `api/integrations.py` (`list_integrations`). Uses `firestore_db.list_integrations`.
+  - **Frontend Usage:** Used in `frontend/src/app/dashboard/integrations/page.tsx` via `listIntegrations` service call.
+  - **Status:** ✅ Implemented & Used
+- **POST** `/{type}` (type must be "slack" or "website")
+  - **Description:** Create a new Slack or Website integration.
+  - **Requires Auth:** Yes (User object)
+  - **Request Body:** `IntegrationCreate` (matches type, name, chatbotId, config)
+  - **Response:** `Integration`
+  - **Backend Implementation:** Seems correct in `api/integrations.py` (`create_integration`). Validates type, creates DB entry, calls `process_integration`.
+  - **Frontend Usage:** Likely used within `SlackIntegrationManager` or similar components when adding a new integration (needs specific component check).
+  - **Status:** ✅ Implemented (Frontend usage needs specific component check)
+- **GET** `/{integration_id}`
+  - **Description:** Get details for a specific integration.
+  - **Requires Auth:** Yes (User object, checks ownership)
+  - **Response:** `Integration`
+  - **Backend Implementation:** Seems correct in `api/integrations.py` (`get_integration`). Fetches from DB, checks ownership.
+  - **Frontend Usage:** Likely used when viewing/editing an integration (needs specific component check).
+  - **Status:** ✅ Implemented (Frontend usage needs specific component check)
+- **PUT** `/{integration_id}`
+  - **Description:** Update an integration.
+  - **Requires Auth:** Yes (User object, checks ownership)
+  - **Request Body:** `IntegrationUpdate` (name: Optional[str], status: Optional[str], chatbotId: Optional[str], config: Optional[dict])
+  - **Response:** `Integration`
+  - **Backend Implementation:** Seems correct in `api/integrations.py` (`update_integration`). Fetches, checks owner, updates DB, calls `process_integration` if status changes.
+  - **Frontend Usage:** Used in `frontend/src/app/dashboard/integrations/page.tsx` via `handleIntegrationUpdate` callback, likely triggered by components like `SlackIntegrationManager`.
+  - **Status:** ✅ Implemented & Used
+- **DELETE** `/{integration_id}`
+  - **Description:** Delete an integration.
+  - **Requires Auth:** Yes (User object, checks ownership)
+  - **Response:** `204 No Content`
+  - **Backend Implementation:** Seems correct in `api/integrations.py` (`delete_integration`). Fetches, checks owner, deletes from DB.
+  - **Frontend Usage:** Likely used in integration management UI (needs specific component check).
+  - **Status:** ✅ Implemented (Frontend usage needs specific component check)
+- **POST** `/slack/events`
+  - **Description:** Endpoint for receiving Slack events (like messages, mentions). Handles URL verification and event processing.
+  - **Requires Auth:** No (Public, verified by Slack signing secret)
+  - **Request Body:** Raw Slack event payload
+  - **Response:** Varies (e.g., `challenge` for URL verification, `200 OK` for events)
+  - **Backend Implementation:** Seems correct in `api/integrations.py` (`handle_slack_events`). Handles verification, finds integration by `team_id`, verifies signature, calls `slack_handler.handle_event`.
+  - **Frontend Usage:** Not directly called by frontend. Called by Slack.
+  - **Status:** ✅ Implemented
+- **POST** `/slack/{integration_id}/credentials`
+  - **Description:** Update Slack credentials (e.g., bot token) for an existing integration.
+  - **Requires Auth:** Yes (User object, checks ownership)
+  - **Request Body:** `Dict[str, str]` (e.g., `{ "bot_token": "...", "signing_secret": "..." }`)
+  - **Response:** `{ "message": "Credentials updated successfully" }` or `Integration` object after reprocessing.
+  - **Backend Implementation:** Seems correct in `api/integrations.py` (`update_slack_credentials`). Fetches, checks owner/type, validates token via `auth.test`, updates config, calls `process_integration`.
+  - **Frontend Usage:** Likely used within `SlackIntegrationManager` when saving credentials (needs specific component check).
+  - **Status:** ✅ Implemented (Frontend usage needs specific component check)
+
+## User Settings (`/api/settings`)
+
+- **GET** `/`
+  - **Description:** Get the settings for the current user. Creates default settings if none exist.
+  - **Requires Auth:** Yes (User object)
+  - **Response:** `Dict[str, Any]` (user settings object)
+  - **Backend Implementation:** Seems correct in `api/settings.py` (`get_user_settings`). Uses `firestore_db.get_user_settings` and creates defaults if needed.
+  - **Frontend Usage:** Not clearly used in `frontend/src/app/dashboard/settings/page.tsx`. Frontend seems to use user context directly or has mock data/logic.
+  - **Status:** ✅ Implemented (Frontend usage missing/unclear)
+- **PUT** `/`
+  - **Description:** Update the settings for the current user. Protected fields (like API key, usage stats) are ignored.
+  - **Requires Auth:** Yes (User object)
+  - **Request Body:** `Dict[str, Any]` (subset of user settings)
+  - **Response:** `Dict[str, Any]` (updated user settings object)
+  - **Backend Implementation:** Seems correct in `api/settings.py` (`update_user_settings`). Fetches, removes protected fields, updates DB.
+  - **Frontend Usage:** Not clearly used in `frontend/src/app/dashboard/settings/page.tsx`. Frontend seems to have mock save logic (`handleSaveProfile`).
+  - **Status:** ✅ Implemented (Frontend usage missing/unclear)
+- **POST** `/regenerate-api-key`
+  - **Description:** Regenerate the API key for the current user.
+  - **Requires Auth:** Yes (User object)
+  - **Response:** `{ "apiKey": str }` (new API key)
+  - **Backend Implementation:** Seems correct in `api/settings.py` (`regenerate_api_key`). Generates new UUID, updates DB.
+  - **Frontend Usage:** Not clearly used in `frontend/src/app/dashboard/settings/page.tsx`. Frontend seems to have mock regeneration logic (`handleRegenerateApiKey`).
+  - **Status:** ✅ Implemented (Frontend usage missing/unclear) 
