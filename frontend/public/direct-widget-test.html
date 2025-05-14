@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChatSphere Direct Widget Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+        .container {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        h1 {
+            color: #333;
+        }
+        pre {
+            background-color: #f5f5f5;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+        #debug-log {
+            height: 200px;
+            overflow-y: auto;
+            margin-top: 10px;
+            border: 1px solid #ccc;
+            padding: 10px;
+            font-family: monospace;
+            background-color: #f9f9f9;
+        }
+        .error {
+            color: red;
+        }
+        .success {
+            color: green;
+        }
+        
+        /* Widget styles */
+        .widget-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 9999;
+        }
+        .widget-button {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background-color: #6366f1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        .widget-button svg {
+            width: 30px;
+            height: 30px;
+            fill: white;
+        }
+        .widget-card {
+            position: absolute;
+            bottom: 80px;
+            right: 0;
+            width: 350px;
+            height: 500px;
+            border-radius: 12px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2);
+            background-color: white;
+            opacity: 0;
+            transform: translateY(20px);
+            pointer-events: none;
+            transition: all 0.3s ease;
+        }
+        .widget-card.open {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: all;
+        }
+        .widget-header {
+            padding: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background-color: #6366f1;
+            color: white;
+        }
+        .widget-title {
+            font-weight: 600;
+        }
+        .widget-close {
+            cursor: pointer;
+        }
+        .widget-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            background-color: #f9fafb;
+        }
+        .widget-input-container {
+            padding: 12px;
+            border-top: 1px solid #e5e7eb;
+            display: flex;
+            gap: 8px;
+        }
+        .widget-input {
+            flex: 1;
+            padding: 10px 12px;
+            border-radius: 8px;
+            border: 1px solid #e5e7eb;
+            outline: none;
+        }
+        .widget-send {
+            background-color: #6366f1;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 0 16px;
+            cursor: pointer;
+        }
+        .message {
+            max-width: 80%;
+            padding: 12px;
+            border-radius: 12px;
+            line-height: 1.5;
+        }
+        .message.user {
+            align-self: flex-end;
+            background-color: #6366f1;
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+        .message.bot {
+            align-self: flex-start;
+            background-color: white;
+            border: 1px solid #e5e7eb;
+            color: #374151;
+            border-bottom-left-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <h1>ChatSphere Direct Widget Test</h1>
+    
+    <div class="container">
+        <h2>Debug Information</h2>
+        <p>This page contains a direct implementation of the widget for testing purposes.</p>
+        
+        <div id="debug-log"></div>
+        
+        <h3>Chatbot ID Configuration:</h3>
+        <input type="text" id="chatbot-id" placeholder="Enter your chatbot ID" style="width: 300px; padding: 8px;">
+        <button id="update-id" style="padding: 8px 16px; margin-left: 8px;">Update ID</button>
+    </div>
+    
+    <div class="container">
+        <h2>Widget Test</h2>
+        <p>This is a direct implementation of the widget (not using the external script).</p>
+        <p>You can test if your backend is working correctly with this simplified widget.</p>
+    </div>
+    
+    <!-- Manual Widget Implementation -->
+    <div class="widget-container">
+        <div class="widget-button" id="widget-button">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"></path></svg>
+        </div>
+        <div class="widget-card" id="widget-card">
+            <div class="widget-header">
+                <div class="widget-title">Chat Assistant</div>
+                <div class="widget-close" id="widget-close">✕</div>
+            </div>
+            <div class="widget-messages" id="widget-messages">
+                <!-- Messages will be added here -->
+                <div class="message bot">Hi! How can I help you today?</div>
+            </div>
+            <div class="widget-input-container">
+                <input type="text" class="widget-input" id="widget-input" placeholder="Type your message...">
+                <button class="widget-send" id="widget-send">Send</button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Debug logger
+        const debugLog = document.getElementById('debug-log');
+        
+        function log(message, type = 'info') {
+            const entry = document.createElement('div');
+            entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            if (type === 'error') entry.className = 'error';
+            if (type === 'success') entry.className = 'success';
+            debugLog.appendChild(entry);
+            debugLog.scrollTop = debugLog.scrollHeight;
+        }
+        
+        // Widget variables
+        let chatbotId = 'demo-chatbot-id'; // Default ID
+        let isOpen = false;
+        let messages = [{
+            role: 'bot',
+            content: 'Hi! How can I help you today?'
+        }];
+        
+        // Elements
+        const button = document.getElementById('widget-button');
+        const card = document.getElementById('widget-card');
+        const closeBtn = document.getElementById('widget-close');
+        const input = document.getElementById('widget-input');
+        const sendBtn = document.getElementById('widget-send');
+        const messagesContainer = document.getElementById('widget-messages');
+        
+        // Update chatbot ID
+        document.getElementById('update-id').addEventListener('click', () => {
+            const newId = document.getElementById('chatbot-id').value.trim();
+            if (newId) {
+                chatbotId = newId;
+                log(`Chatbot ID updated to: ${chatbotId}`, 'success');
+            } else {
+                log('Please enter a valid chatbot ID', 'error');
+            }
+        });
+        
+        // Toggle widget
+        function toggleWidget() {
+            isOpen = !isOpen;
+            if (isOpen) {
+                card.classList.add('open');
+                input.focus();
+            } else {
+                card.classList.remove('open');
+            }
+        }
+        
+        button.addEventListener('click', toggleWidget);
+        closeBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            toggleWidget();
+        });
+        
+        // Add message to chat
+        function addMessage(role, content) {
+            // Create message element
+            const messageEl = document.createElement('div');
+            messageEl.className = `message ${role}`;
+            messageEl.textContent = content;
+            
+            // Add to container
+            messagesContainer.appendChild(messageEl);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            
+            // Store in messages array
+            messages.push({ role, content });
+        }
+        
+        // Send message
+        async function sendMessage() {
+            const messageText = input.value.trim();
+            if (!messageText) return;
+            
+            // Add user message
+            addMessage('user', messageText);
+            
+            // Clear input
+            input.value = '';
+            
+            try {
+                log(`Sending message to chatbot ID: ${chatbotId}`);
+                
+                // Convert messages for API
+                const history = messages.map(msg => ({
+                    role: msg.role === 'bot' ? 'assistant' : 'user',
+                    content: msg.content
+                }));
+                
+                // Call API
+                const response = await fetch(`http://localhost:8000/api/chat/widget/${chatbotId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        message: messageText,
+                        chatHistory: history
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`API error: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                log(`Received response: ${data.response.substring(0, 50)}...`, 'success');
+                
+                // Add bot response
+                addMessage('bot', data.response);
+                
+            } catch (error) {
+                log(`Error: ${error.message}`, 'error');
+                addMessage('bot', 'Sorry, I encountered an error. Please try again later.');
+            }
+        }
+        
+        // Event listeners for sending
+        sendBtn.addEventListener('click', sendMessage);
+        input.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+        
+        // Initialization
+        log('Direct widget test initialized', 'success');
+        document.getElementById('chatbot-id').value = chatbotId;
+    </script>
+</body>
+</html> 

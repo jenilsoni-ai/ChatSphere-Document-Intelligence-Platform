@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChatSphere Widget Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+        .container {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        h1 {
+            color: #333;
+        }
+        pre {
+            background-color: #f5f5f5;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+        .debug-log {
+            height: 200px;
+            overflow-y: auto;
+            margin-top: 10px;
+            border: 1px solid #ccc;
+            padding: 10px;
+            font-family: monospace;
+            background-color: #f9f9f9;
+        }
+        .error {
+            color: red;
+        }
+        .success {
+            color: green;
+        }
+        .button {
+            background-color: #4CAF50;
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 4px 2px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>ChatSphere Widget Test Page</h1>
+    
+    <div class="container">
+        <h2>Debug Information</h2>
+        <p>The following section will help debug any issues with the widget loading:</p>
+        
+        <div id="debug-log" class="debug-log"></div>
+        
+        <h3>Manual Checks:</h3>
+        <button id="check-backend" class="button">Check Backend Connection</button>
+        <button id="check-widget-file" class="button">Check Widget.js File</button>
+        <button id="check-config" class="button">Check Config Endpoint</button>
+    </div>
+    
+    <div class="container">
+        <h2>Widget Embed Code</h2>
+        <p>The widget script is embedded at the end of this page. If it doesn't appear, check the console for errors.</p>
+        <p>Widget should appear as a chat button in the bottom right corner of the page.</p>
+    </div>
+    
+    <script>
+        // Debug logger
+        const debugLog = document.getElementById('debug-log');
+        
+        function log(message, type = 'info') {
+            const entry = document.createElement('div');
+            entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            if (type === 'error') entry.className = 'error';
+            if (type === 'success') entry.className = 'success';
+            debugLog.appendChild(entry);
+            debugLog.scrollTop = debugLog.scrollHeight;
+        }
+        
+        // Override console.log and console.error to show in our debug panel
+        const originalConsoleLog = console.log;
+        const originalConsoleError = console.error;
+        
+        console.log = function(...args) {
+            log(args.join(' '));
+            originalConsoleLog.apply(console, args);
+        };
+        
+        console.error = function(...args) {
+            log(args.join(' '), 'error');
+            originalConsoleError.apply(console, args);
+        };
+        
+        // Log when page loads
+        window.addEventListener('DOMContentLoaded', () => {
+            log('Page loaded successfully', 'success');
+        });
+        
+        // Check if backend is accessible
+        document.getElementById('check-backend').addEventListener('click', async () => {
+            try {
+                log('Checking backend connection...');
+                // const response = await fetch('http://localhost:8000/health');
+                const response = await fetch('/api/health');
+                if (response.ok) {
+                    const data = await response.json();
+                    log(`Backend health check: ${JSON.stringify(data)}`, 'success');
+                } else {
+                    log(`Backend returned status: ${response.status}`, 'error');
+                }
+            } catch (error) {
+                log(`Backend connection error: ${error.message}`, 'error');
+            }
+        });
+        
+        // Check if widget.js file is accessible
+        document.getElementById('check-widget-file').addEventListener('click', async () => {
+            try {
+                // Get chatbot ID from the script tag
+                const scriptTag = document.querySelector('script[data-chatbot-id]');
+                const chatbotId = scriptTag ? scriptTag.getAttribute('data-chatbot-id') : null;
+                
+                if (!chatbotId) {
+                    log('No chatbot ID found in script tag', 'error');
+                    return;
+                }
+                
+                log(`Checking widget.js file for chatbot ID: ${chatbotId}`);
+                // const response = await fetch(`http://localhost:8000/widget/${chatbotId}.js`);
+                const response = await fetch(`/widget/${chatbotId}`);
+
+                if (response.ok) {
+                    log('Widget.js file is accessible', 'success');
+                } else {
+                    log(`Widget.js file returned status: ${response.status}`, 'error');
+                }
+            } catch (error) {
+                log(`Widget.js check error: ${error.message}`, 'error');
+            }
+        });
+        
+        // Check if config endpoint is accessible
+        document.getElementById('check-config').addEventListener('click', async () => {
+            try {
+                // Get chatbot ID from the script tag
+                const scriptTag = document.querySelector('script[data-chatbot-id]');
+                const chatbotId = scriptTag ? scriptTag.getAttribute('data-chatbot-id') : null;
+                
+                if (!chatbotId) {
+                    log('No chatbot ID found in script tag', 'error');
+                    return;
+                }
+                
+                log(`Checking config endpoint for chatbot ID: ${chatbotId}`);
+                // const response = await fetch(`http://localhost:8000/api/chatbots/widget-config/${chatbotId}`);
+                const response = await fetch(`/api/chatbots/widget-config/${chatbotId}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    log(`Config endpoint returned: ${JSON.stringify(data)}`, 'success');
+                } else {
+                    log(`Config endpoint returned status: ${response.status}`, 'error');
+                }
+            } catch (error) {
+                log(`Config endpoint check error: ${error.message}`, 'error');
+            }
+        });
+        
+        // Log when script loads or fails
+        window.addEventListener('error', (event) => {
+            if (event.target && event.target.tagName === 'SCRIPT') {
+                log(`Script loading error: ${event.target.src}`, 'error');
+            }
+        });
+    </script>
+    
+    <!-- Replace this with your actual embed code and chatbot ID -->
+    <script 
+    src="http://localhost:3000/widget/891cd47f-99ef-44ee-ac50-c41a61619235" 
+    data-chatbot-id="891cd47f-99ef-44ee-ac50-c41a61619235"
+    data-position="bottom-right"
+    data-primary-color="007AFF"
+    data-title="Chat with our AI"
+    data-show-branding="true"
+    ></script>
+</body>
+</html> 
